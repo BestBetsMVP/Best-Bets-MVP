@@ -19,6 +19,7 @@
         .accent-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
         .tab-active { border-bottom: 2px solid #10b981; color: #10b981; }
         .sim-bar { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .disclaimer-box { background-color: #1e3a2f; border-left: 4px solid #f59e0b; }
     </style>
 </head>
 <body class="pb-32 min-h-screen">
@@ -320,6 +321,94 @@
         </section>
 
     </main>
+
+    <!-- FOOTER: DISCLAIMERS & RESPONSIBLE GAMBLING -->
+    <footer class="border-t border-gray-800 bg-slate-900/50 px-4 py-8 mt-8">
+        <div class="max-w-5xl mx-auto space-y-6">
+            
+            <!-- Disclaimer Banner -->
+            <div class="disclaimer-box p-4 rounded-lg space-y-3">
+                <div class="flex items-start space-x-3">
+                    <i class="fa-solid fa-exclamation-triangle text-amber-500 text-lg mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-white text-sm">Important Disclaimer</h3>
+                        <p class="text-xs text-gray-300 mt-1">
+                            <strong>Best Bets PRO provides analytical predictions and entertainment purposes only.</strong> These are NOT guarantees of outcomes. Sports predictions carry inherent risk. Actual results may differ significantly from AI projections. This platform does not offer gambling services or accept wagers. All content is for informational analysis only.
+                        </p>
+                        <p class="text-xs text-gray-300 mt-2">
+                            <strong>No Refunds Policy:</strong> Best Bets PRO operates on a "predictions as-is" basis. We do not offer refunds for predictions that do not materialize, as all projections are analytical models subject to real-world variance.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Responsible Gambling Section -->
+            <div class="bg-blue-950/40 border border-blue-800/50 p-4 rounded-lg space-y-3">
+                <h3 class="font-bold text-blue-300 flex items-center space-x-2 text-sm">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                    <span>Responsible Gambling & Mental Health Support</span>
+                </h3>
+                <p class="text-xs text-gray-300">
+                    Sports analysis can become problematic if it leads to compulsive betting behavior or financial hardship. If you or someone you know is struggling with gambling addiction, please reach out for help immediately:
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                    <div class="bg-slate-800/60 p-3 rounded border border-blue-700/30">
+                        <p class="text-xs text-blue-300 font-semibold mb-1">🇺🇸 National Council on Problem Gambling (NCPG)</p>
+                        <p class="text-xs text-gray-300"><strong>Call/Text:</strong> <span class="text-blue-300 font-mono">1-800-GAMBLER (1-800-426-2537)</span></p>
+                        <p class="text-xs text-gray-300"><strong>Available 24/7 • Confidential & Free</strong></p>
+                        <p class="text-xs text-gray-400 mt-1">Multi-language support available</p>
+                    </div>
+                    
+                    <div class="bg-slate-800/60 p-3 rounded border border-blue-700/30">
+                        <p class="text-xs text-blue-300 font-semibold mb-1">🌍 Gamblers Anonymous (GA)</p>
+                        <p class="text-xs text-gray-300"><strong>Website:</strong> <span class="text-blue-300">www.gamblersanonymous.org</span></p>
+                        <p class="text-xs text-gray-300"><strong>Find local meetings & support groups</strong></p>
+                        <p class="text-xs text-gray-400 mt-1">Peer-led recovery program</p>
+                    </div>
+
+                    <div class="bg-slate-800/60 p-3 rounded border border-blue-700/30">
+                        <p class="text-xs text-blue-300 font-semibold mb-1">📱 SAMHSA National Helpline</p>
+                        <p class="text-xs text-gray-300"><strong>Call:</strong> <span class="text-blue-300 font-mono">1-800-662-4357</span></p>
+                        <p class="text-xs text-gray-300"><strong>Free • Confidential • 24/7</strong></p>
+                        <p class="text-xs text-gray-400 mt-1">Mental health & substance abuse support</p>
+                    </div>
+
+                    <div class="bg-slate-800/60 p-3 rounded border border-blue-700/30">
+                        <p class="text-xs text-blue-300 font-semibold mb-1">🛑 Self-Exclusion Programs</p>
+                        <p class="text-xs text-gray-300">Many sportsbooks offer self-exclusion tools to restrict account access during recovery.</p>
+                        <p class="text-xs text-gray-400 mt-1">Ask your sportsbook about options</p>
+                    </div>
+                </div>
+
+                <p class="text-xs text-gray-400 italic mt-3">
+                    If you're experiencing anxiety, depression, or financial distress related to sports analysis or betting, mental health professionals are available through your insurance or local crisis hotlines.
+                </p>
+            </div>
+
+            <!-- Risk Awareness -->
+            <div class="space-y-2 text-xs text-gray-400">
+                <p><strong class="text-gray-300">⚠️ Key Risk Factors:</strong></p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>AI predictions are based on historical data—past performance does not guarantee future results.</li>
+                    <li>Injuries, trades, weather, and unforeseen events can dramatically change outcomes.</li>
+                    <li>Even high-confidence projections carry real risk of loss.</li>
+                    <li>Building multiple-leg slips compounds risk exponentially.</li>
+                    <li>Never wager money you cannot afford to lose.</li>
+                </ul>
+            </div>
+
+            <!-- Footer Navigation -->
+            <div class="border-t border-gray-700 pt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 space-y-2">
+                <div>© 2026 Best Bets PRO MVP. Analytical Predictions Only. Not Gambling Services.</div>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-gray-300 transition">Terms of Service</a>
+                    <a href="#" class="hover:text-gray-300 transition">Privacy Policy</a>
+                    <a href="#" class="hover:text-gray-300 transition">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- JavaScript Application Logic -->
     <script>
