@@ -1,0 +1,346 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Best Bets MVP - AI Line Analysis & Prop Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0b0f19; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glow-accent { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-xl shadow-lg">⚡</div>
+        <div>
+          <h1 id="appHeaderTitle" class="text-lg font-bold tracking-wide text-white">BEST BETS <span class="text-blue-500 text-xs px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30">PRO</span></h1>
+          <p id="appHeaderSubtitle" class="text-xs text-slate-400">Autonomous AI Market & Prop Intelligence</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="toggleEditorDrawer()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium transition">⚙️ Content Admin</button>
+        <button onclick="openPaywall()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition glow-accent">🔒 Unlock Full Edge</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-6 w-full space-y-6">
+
+    <!-- AI SCANNER STATUS BANNER -->
+    <div class="glass-card rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="relative flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </div>
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Autonomous Engine Active</span>
+          <p class="text-sm text-slate-300">Scanning early opening lines, practice reports & stat models (24h - 72h ahead)</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 w-full md:w-auto">
+        <button onclick="triggerDeepScan()" class="w-full md:w-auto text-xs px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition flex items-center justify-center space-x-2">
+          <span>🧠 Run Live AI Deep Scan</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CATEGORY FILTER BAR -->
+    <div class="space-y-2">
+      <label class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Select Sport / Market Category</label>
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar" id="categoryBar">
+        <!-- Dynamic Category Buttons Populated by JS -->
+      </div>
+    </div>
+
+    <!-- BOOKMAKER / DESK FILTER BAR -->
+    <div class="space-y-2">
+      <div class="flex justify-between items-center">
+        <label class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Filter By Market Desk / Platform</label>
+        <button onclick="openPlatformModal()" class="text-xs text-blue-400 hover:underline">Change My Preferences</button>
+      </div>
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar" id="platformBar">
+        <!-- Dynamic Platform Badges Populated by JS -->
+      </div>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="picksContainer">
+      <!-- Pick Cards Injected Here -->
+    </div>
+
+  </main>
+
+  <!-- FLOATING LINEUP BUILDER BUTTON -->
+  <div id="floatingLineupBar" class="fixed bottom-4 right-4 z-30 hidden">
+    <button onclick="toggleLineupDrawer()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-full shadow-2xl flex items-center space-x-3 border border-blue-400/30">
+      <span>📋 View Lineup Slip</span>
+      <span id="lineupCountBadge" class="bg-white text-blue-900 text-xs font-extrabold px-2 py-0.5 rounded-full">0</span>
+    </button>
+  </div>
+
+  <!-- LINEUP SLIP DRAWER -->
+  <div id="lineupDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 z-50 transform translate-x-full transition-transform duration-300 ease-in-out p-6 overflow-y-auto flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+          <span>📋 Lineup Builder</span>
+          <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">Probability Engine</span>
+        </h2>
+        <button onclick="toggleLineupDrawer()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+
+      <div class="my-4 space-y-3" id="lineupItemsList">
+        <!-- Lineup items injected here -->
+      </div>
+    </div>
+
+    <div class="border-t border-slate-800 pt-4 space-y-4">
+      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-400">Combined Win Probability:</span>
+          <span id="combinedProbDisplay" class="font-bold text-emerald-400">0.0%</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-400">Estimated Fair Multiplier:</span>
+          <span id="multiplierDisplay" class="font-bold text-blue-400">0.00x</span>
+        </div>
+      </div>
+
+      <button onclick="openPaywall()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition">
+        🔒 Lock In Slip & Access Detailed Model
+      </button>
+    </div>
+  </div>
+
+  <!-- PAYWALL MODAL -->
+  <div id="paywallModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-lg w-full rounded-2xl p-6 relative border border-slate-700">
+      <button onclick="closePaywall()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
+      <div class="text-center space-y-3">
+        <div class="inline-block p-3 rounded-full bg-blue-600/20 text-blue-400 text-2xl mb-1">⚡</div>
+        <h3 class="text-2xl font-extrabold text-white">Unlock Full Edge Access</h3>
+        <p class="text-sm text-slate-300">Get 24h-72h early line scans, high +EV stat props, and automated market probability models for <span class="text-emerald-400 font-bold">$15/month</span>.</p>
+      </div>
+
+      <div class="my-6 space-y-3 text-sm text-slate-300">
+        <div class="flex items-center space-x-2">
+          <span class="text-emerald-400">✓</span>
+          <span>Early opening line movement & early injury indicators</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-emerald-400">✓</span>
+          <span>Unlimited Lineup Slip Probability calculations</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-emerald-400">✓</span>
+          <span>All Sports Categories + Macro & Prediction Markets</span>
+        </div>
+      </div>
+
+      <!-- PROMO CODE INPUT -->
+      <div class="space-y-2 mb-6">
+        <label class="text-xs font-semibold uppercase text-slate-400">Have a Sponsor Promo Code?</label>
+        <div class="flex space-x-2">
+          <input type="text" id="promoInput" placeholder="Enter code (e.g., VIP100)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white uppercase focus:outline-none focus:border-blue-500">
+          <button onclick="applyPromoCode()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-lg border border-slate-700 transition">Apply</button>
+        </div>
+        <p id="promoMessage" class="text-xs hidden"></p>
+      </div>
+
+      <a id="paywallCheckoutBtn" href="https://stripe.com" target="_blank" class="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-center text-white font-bold rounded-xl shadow-lg transition">
+        Subscribe for $15 / Month
+      </a>
+
+      <div class="mt-4 text-center space-y-1">
+        <p class="text-[10px] text-slate-500">Must be 21+. Gambling Problem? Call 1-800-GAMBLER. For informational and analytical research purposes only. No financial guarantees or refunds.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT EDITOR DRAWER -->
+  <div id="editorDrawer" class="fixed inset-y-0 left-0 w-full max-w-sm bg-slate-900 border-r border-slate-800 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-6 overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+      <h2 class="text-lg font-bold text-white">⚙️ Content & Admin Settings</h2>
+      <button onclick="toggleEditorDrawer()" class="text-slate-400 hover:text-white text-xl">✕</button>
+    </div>
+    <div class="mt-6 space-y-4 text-sm">
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 mb-1">App Title</label>
+        <input type="text" id="editHeaderTitle" value="BEST BETS" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 mb-1">Stripe Checkout Link URL</label>
+        <input type="text" id="editStripeUrl" value="https://stripe.com" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
+      </div>
+      <button onclick="saveAdminSettings()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded">Save Changes</button>
+    </div>
+  </div>
+
+  <footer class="border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-500">
+    <p>© 2026 Best Bets MVP Engine. All rights reserved. 21+ Responsible Gaming (1-800-GAMBLER).</p>
+  </footer>
+
+  <script>
+    // DATA MOCK STATE
+    const categories = ["ALL", "NFL", "NBA", "MLB", "NHL", "SOCCER", "UFC/BOXING", "COLLEGE", "POLITICS & MACRO"];
+    const platforms = ["ALL DESKS", "Desk Alpha", "Prop Source A", "Exchange 1", "Exchange 2", "Bookmaker B"];
+
+    let activeCategory = "ALL";
+    let activePlatform = "ALL DESKS";
+    let lineup = [];
+
+    const picksData = [
+      { id: 1, category: "NFL", desk: "Prop Source A", match: "Kansas City vs Buffalo (24h Out)", prop: "Passing Yards Over 265.5", winProb: 63.5, evEdge: "+8.4%", note: "Early line posted 1.5 yds lower than model expectation. Defense ranks #28 vs pass." },
+      { id: 2, category: "NBA", desk: "Desk Alpha", match: "LA vs Boston (48h Out)", prop: "Points Over 24.5", winProb: 61.2, evEdge: "+6.8%", note: "Early rest model indicates high usage. Opponent allows high paint volume." },
+      { id: 3, category: "POLITICS & MACRO", desk: "Exchange 1", match: "Economic Rate Decision", prop: "Rate Cut Approval Odds", winProb: 72.1, evEdge: "+11.2%", note: "Early macroeconomic sentiment indicators shifting model confidence." },
+      { id: 4, category: "MLB", desk: "Bookmaker B", match: "NY vs Houston (72h Out)", prop: "Pitcher Strikeouts Over 6.5", winProb: 58.9, evEdge: "+5.1%", note: "Opposing lineup ranks top 3 in strikeout rate over last 10 games." }
+    ];
+
+    // RENDER CATEGORIES
+    function renderCategories() {
+      const bar = document.getElementById("categoryBar");
+      bar.innerHTML = categories.map(cat => `
+        <button onclick="selectCategory('${cat}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${activeCategory === cat ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    // RENDER PLATFORMS
+    function renderPlatforms() {
+      const bar = document.getElementById("platformBar");
+      bar.innerHTML = platforms.map(p => `
+        <button onclick="selectPlatform('${p}')" class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition ${activePlatform === p ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'}">
+          ${p}
+        </button>
+      `).join('');
+    }
+
+    // RENDER PICKS CARDS
+    function renderPicks() {
+      const container = document.getElementById("picksContainer");
+      const filtered = picksData.filter(p => {
+        const catMatch = activeCategory === "ALL" || p.category === activeCategory;
+        const platMatch = activePlatform === "ALL DESKS" || p.desk === activePlatform;
+        return catMatch && platMatch;
+      });
+
+      if(filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-sm">No analysis matches the selected category/platform filters.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const inLineup = lineup.some(l => l.id === item.id);
+        return `
+          <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-slate-700 transition">
+            <div>
+              <div class="flex items-center justify-between text-xs mb-2">
+                <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">${item.category}</span>
+                <span class="text-slate-400 font-medium">${item.desk}</span>
+              </div>
+              <h3 class="font-bold text-white text-base">${item.match}</h3>
+              <p class="text-sm text-blue-400 font-semibold mt-1">${item.prop}</p>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">${item.note}</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-slate-500 block uppercase font-bold">AI Model Probability</span>
+                <span class="text-base font-extrabold text-emerald-400">${item.winProb}% Win Prob</span>
+              </div>
+              <button onclick="toggleLineupItem(${item.id})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${inLineup ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'}">
+                ${inLineup ? '✓ In Slip' : '+ Add to Slip'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // LINEUP HANDLERS
+    function toggleLineupItem(id) {
+      const item = picksData.find(p => p.id === id);
+      const exists = lineup.some(l => l.id === id);
+      if(exists) {
+        lineup = lineup.filter(l => l.id !== id);
+      } else {
+        lineup.push(item);
+      }
+      updateLineupUI();
+      renderPicks();
+    }
+
+    function updateLineupUI() {
+      const bar = document.getElementById("floatingLineupBar");
+      const badge = document.getElementById("lineupCountBadge");
+      const list = document.getElementById("lineupItemsList");
+      const probDisplay = document.getElementById("combinedProbDisplay");
+      const multDisplay = document.getElementById("multiplierDisplay");
+
+      badge.innerText = lineup.length;
+      if(lineup.length > 0) bar.classList.remove("hidden");
+      else bar.classList.add("hidden");
+
+      list.innerHTML = lineup.map(item => `
+        <div class="bg-slate-800 p-3 rounded-lg flex justify-between items-center text-xs">
+          <div>
+            <p class="font-bold text-white">${item.prop}</p>
+            <p class="text-slate-400">${item.match}</p>
+          </div>
+          <button onclick="toggleLineupItem(${item.id})" class="text-slate-400 hover:text-red-400 font-bold ml-2">✕</button>
+        </div>
+      `).join('');
+
+      // Calculate Combined Probability
+      let prob = lineup.reduce((acc, curr) => acc * (curr.winProb / 100), 1);
+      let combined = lineup.length > 0 ? (prob * 100).toFixed(1) : "0.0";
+      let multiplier = lineup.length > 0 ? (1 / prob).toFixed(2) : "0.00";
+
+      probDisplay.innerText = `${combined}%`;
+      multDisplay.innerText = `${multiplier}x`;
+    }
+
+    // UI MODAL TOGGLES
+    function selectCategory(cat) { activeCategory = cat; renderCategories(); renderPicks(); }
+    function selectPlatform(p) { activePlatform = p; renderPlatforms(); renderPicks(); }
+    function toggleLineupDrawer() { document.getElementById("lineupDrawer").classList.toggle("translate-x-full"); }
+    function toggleEditorDrawer() { document.getElementById("editorDrawer").classList.toggle("-translate-x-full"); }
+    function openPaywall() { document.getElementById("paywallModal").classList.remove("hidden"); }
+    function closePaywall() { document.getElementById("paywallModal").classList.add("hidden"); }
+
+    function applyPromoCode() {
+      const code = document.getElementById("promoInput").value.trim().toUpperCase();
+      const msg = document.getElementById("promoMessage");
+      msg.classList.remove("hidden");
+      if(code === "VIP100" || code === "SPONSOR100") {
+        msg.className = "text-xs text-emerald-400 font-bold";
+        msg.innerText = "✓ 100% Free VIP Sponsor Access Granted!";
+      } else {
+        msg.className = "text-xs text-red-400";
+        msg.innerText = "Invalid promo code. Try VIP100";
+      }
+    }
+
+    function triggerDeepScan() {
+      alert("AI Deep Scan Complete! Early line movements and injury updates recalculated for all 24h-72h upcoming events.");
+    }
+
+    // INITIALIZE
+    renderCategories();
+    renderPlatforms();
+    renderPicks();
+  </script>
+</body>
+</html>
