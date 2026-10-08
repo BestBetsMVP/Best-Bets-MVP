@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Zap,
-  RefreshCw,
   Sliders,
   TrendingUp,
   Plus,
@@ -19,7 +18,68 @@ import {
   Activity,
 } from "lucide-react";
 
-// Interfaces
+// ==========================================
+// 1. BACKEND MARKET STORE & TYPES
+// ==========================================
+export type SportKey = "all" | "nfl" | "mlb" | "nba" | "ufc" | "soccer" | "props";
+export type RiskLevel = "Low Risk" | "Medium Risk" | "High Risk";
+
+export type PickCard = {
+  id: string;
+  sport: "NFL" | "MLB" | "NBA" | "UFC / Combat" | "Soccer" | "Props";
+  sportKey: Exclude<SportKey, "all">;
+  title: string;
+  matchup: string;
+  edge: string;
+  winChance: number;
+  ev: number;
+  unitStake: number;
+  confidence: number;
+  risk: RiskLevel;
+  status: string;
+  valueLabel: string;
+  market: string;
+  premium: boolean;
+};
+
+export type SlipDraft = {
+  id: string;
+  title: string;
+  confidence: number;
+  payout: number;
+  risk: RiskLevel;
+  legs: string[];
+};
+
+export type PromoCode = {
+  code: string;
+  freeForLife: boolean;
+  description: string;
+  active: boolean;
+};
+
+export type SubscriptionPlan = {
+  monthlyPrice: number;
+  currency: string;
+  name: string;
+};
+
+const STANDARD_SUBSCRIPTION: SubscriptionPlan = {
+  monthlyPrice: 15,
+  currency: "USD",
+  name: "Standard VIP Pass",
+};
+
+const VIP_PROMO_ONLY4U: PromoCode = {
+  code: "ONLY4U",
+  freeForLife: true,
+  description: "Exclusive lifetime access pass",
+  active: true,
+};
+
+// ==========================================
+// 2. INTERFACES FOR UI & ODDS
+// ==========================================
 interface MarketOdds {
   spread: string;
   moneyline: string;
@@ -57,13 +117,16 @@ interface BetSelection {
   type: "game" | "prop";
 }
 
+// ==========================================
+// 3. MAIN COMPONENT
+// ==========================================
 export default function BestBetsMVP() {
   const [apiKey, setApiKey] = useState<string>("");
   const [isKeySaved, setIsKeySaved] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"games" | "props">("games");
   const [isLiveAutoTicker, setIsLiveAutoTicker] = useState<boolean>(true);
 
-  // Promo & Payment State
+  // Promo & Payment State ($15/mo & ONLY4U)
   const [promoInput, setPromoInput] = useState<string>("");
   const [isVipUser, setIsVipUser] = useState<boolean>(false);
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
@@ -99,7 +162,6 @@ export default function BestBetsMVP() {
     if (!isLiveAutoTicker) return;
 
     const interval = setInterval(() => {
-      // Simulate minor real-time market shifts dynamically locally
       setGames((prevGames) =>
         prevGames.map((game) => {
           const shift = Math.random() > 0.5 ? 5 : -5;
@@ -118,7 +180,7 @@ export default function BestBetsMVP() {
           };
         })
       );
-    }, 5000); // Ticks every 5 seconds locally for free
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [isLiveAutoTicker]);
@@ -152,7 +214,7 @@ export default function BestBetsMVP() {
 
     const mockProps: PropItem[] = [
       { id: "p1", player: "Geno Smith", team: "SEA", stat: "Passing Yards", line: 242.5, overOdds: -115, underOdds: -115, impliedProb: 53.5 },
-      { id: "p2", player: "Bo Nix", team: "DEN", stat: "Passing TDs", line: 1.5, overOdds: +110, underOdds: -140, impliedProb: 47.6 },
+      { id: "p2", player: "Bo Nix", team: "DEN", stat: "Passing TDs", line: 1.5, overOdds: 110, underOdds: -140, impliedProb: 47.6 },
       { id: "p3", player: "Dak Prescott", team: "DAL", stat: "Passing Yards", line: 265.5, overOdds: -110, underOdds: -110, impliedProb: 52.4 },
     ];
 
@@ -173,13 +235,13 @@ export default function BestBetsMVP() {
     setIsKeySaved(false);
   };
 
-  // Promo Code Handler
+  // Promo Code Handler (ONLY4U -> Free for life VIP Pass)
   const handleRedeemPromo = () => {
     const formattedCode = promoInput.trim().toUpperCase();
-    if (formattedCode === "ONLY4U") {
+    if (formattedCode === VIP_PROMO_ONLY4U.code) {
       setIsVipUser(true);
       localStorage.setItem("bestbets_vip_status", "true");
-      setPromoMessage({ text: "PROMO APPLIED! Lifetime VIP Access Granted 🎉", success: true });
+      setPromoMessage({ text: "PROMO APPLIED! Free-for-Life VIP Access Granted 🎉", success: true });
       setTimeout(() => setShowPayModal(false), 1500);
     } else {
       setPromoMessage({ text: "Invalid promo code. Please try again.", success: false });
@@ -232,19 +294,19 @@ export default function BestBetsMVP() {
           </div>
 
           <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-mono flex items-center gap-1">
-            <Activity className="w-3.5 h-3.5 animate-pulse" /> ZERO-COST ENGINE ACTIVE
+            <Activity className="w-3.5 h-3.5 animate-pulse" /> 1-CREDIT GUARDRAIL ACTIVE
           </span>
 
           {isVipUser ? (
             <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold flex items-center gap-1">
-              <Crown className="w-3.5 h-3.5 fill-current" /> VIP UNLOCKED
+              <Crown className="w-3.5 h-3.5 fill-current" /> VIP UNLOCKED (FREE FOR LIFE)
             </span>
           ) : (
             <button
               onClick={() => setShowPayModal(true)}
               className="text-xs bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 hover:opacity-90 transition shadow-lg shadow-emerald-500/20"
             >
-              <Sparkles className="w-3.5 h-3.5 fill-current" /> PROMO / GO PRO
+              <Sparkles className="w-3.5 h-3.5 fill-current" /> $15/MO OR PROMO
             </button>
           )}
         </div>
@@ -544,7 +606,7 @@ export default function BestBetsMVP() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Enter code (e.g. ONLY4U)"
+                  placeholder="Enter code (ONLY4U)"
                   value={promoInput}
                   onChange={(e) => setPromoInput(e.target.value)}
                   className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-100 outline-none focus:border-emerald-500 uppercase flex-1"
@@ -564,17 +626,17 @@ export default function BestBetsMVP() {
               )}
             </div>
 
-            {/* Payment Integration Placeholder */}
+            {/* Payment Integration Placeholder ($15/mo) */}
             <div className="space-y-3 border-t border-slate-800 pt-4">
               <div className="flex justify-between items-center text-xs text-slate-400">
                 <span>Standard Subscription</span>
-                <span className="font-mono font-bold text-slate-200">$19.99 / month</span>
+                <span className="font-mono font-bold text-slate-200">$15.00 / month</span>
               </div>
               <button
-                onClick={() => alert("Stripe checkout gateway initialized!")}
+                onClick={() => alert("Stripe checkout gateway initialized for $15/month!")}
                 className="w-full bg-slate-100 hover:bg-white text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition"
               >
-                <CreditCard className="w-4 h-4" /> Pay via Stripe / Apple Pay
+                <CreditCard className="w-4 h-4" /> Subscribe for $15/mo via Stripe / Apple Pay
               </button>
             </div>
           </div>
