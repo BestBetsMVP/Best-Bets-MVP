@@ -1,346 +1,540 @@
-index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Best Bets MVP - AI Line Analysis & Prop Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background-color: #0b0f19; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
-    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glow-accent { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
-    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEST BETS PRO | AI Sports & Prediction Engine</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #0b0e14; 
+            color: #e2e8f0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+        }
+        .card-bg { background-color: #151c24; border: 1px solid #232d3b; }
+        .card-bg-hover:hover { background-color: #1a232e; }
+        .accent-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .tab-active { border-bottom: 2px solid #10b981; color: #10b981; }
+        .sim-bar { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="pb-32 min-h-screen">
 
-  <!-- TOP HEADER -->
-  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-xl shadow-lg">⚡</div>
-        <div>
-          <h1 id="appHeaderTitle" class="text-lg font-bold tracking-wide text-white">BEST BETS <span class="text-blue-500 text-xs px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30">PRO</span></h1>
-          <p id="appHeaderSubtitle" class="text-xs text-slate-400">Autonomous AI Market & Prop Intelligence</p>
-        </div>
-      </div>
-      <div class="flex items-center space-x-2">
-        <button onclick="toggleEditorDrawer()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium transition">⚙️ Content Admin</button>
-        <button onclick="openPaywall()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition glow-accent">🔒 Unlock Full Edge</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto px-4 py-6 w-full space-y-6">
-
-    <!-- AI SCANNER STATUS BANNER -->
-    <div class="glass-card rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div class="flex items-center space-x-3">
-        <div class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-        </div>
-        <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Autonomous Engine Active</span>
-          <p class="text-sm text-slate-300">Scanning early opening lines, practice reports & stat models (24h - 72h ahead)</p>
-        </div>
-      </div>
-      <div class="flex items-center space-x-2 w-full md:w-auto">
-        <button onclick="triggerDeepScan()" class="w-full md:w-auto text-xs px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition flex items-center justify-center space-x-2">
-          <span>🧠 Run Live AI Deep Scan</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- CATEGORY FILTER BAR -->
-    <div class="space-y-2">
-      <label class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Select Sport / Market Category</label>
-      <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar" id="categoryBar">
-        <!-- Dynamic Category Buttons Populated by JS -->
-      </div>
-    </div>
-
-    <!-- BOOKMAKER / DESK FILTER BAR -->
-    <div class="space-y-2">
-      <div class="flex justify-between items-center">
-        <label class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Filter By Market Desk / Platform</label>
-        <button onclick="openPlatformModal()" class="text-xs text-blue-400 hover:underline">Change My Preferences</button>
-      </div>
-      <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar" id="platformBar">
-        <!-- Dynamic Platform Badges Populated by JS -->
-      </div>
-    </div>
-
-    <!-- CARDS GRID -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="picksContainer">
-      <!-- Pick Cards Injected Here -->
-    </div>
-
-  </main>
-
-  <!-- FLOATING LINEUP BUILDER BUTTON -->
-  <div id="floatingLineupBar" class="fixed bottom-4 right-4 z-30 hidden">
-    <button onclick="toggleLineupDrawer()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-full shadow-2xl flex items-center space-x-3 border border-blue-400/30">
-      <span>📋 View Lineup Slip</span>
-      <span id="lineupCountBadge" class="bg-white text-blue-900 text-xs font-extrabold px-2 py-0.5 rounded-full">0</span>
-    </button>
-  </div>
-
-  <!-- LINEUP SLIP DRAWER -->
-  <div id="lineupDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 z-50 transform translate-x-full transition-transform duration-300 ease-in-out p-6 overflow-y-auto flex flex-col justify-between">
-    <div>
-      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
-          <span>📋 Lineup Builder</span>
-          <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">Probability Engine</span>
-        </h2>
-        <button onclick="toggleLineupDrawer()" class="text-slate-400 hover:text-white text-xl">✕</button>
-      </div>
-
-      <div class="my-4 space-y-3" id="lineupItemsList">
-        <!-- Lineup items injected here -->
-      </div>
-    </div>
-
-    <div class="border-t border-slate-800 pt-4 space-y-4">
-      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-2">
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-400">Combined Win Probability:</span>
-          <span id="combinedProbDisplay" class="font-bold text-emerald-400">0.0%</span>
-        </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-400">Estimated Fair Multiplier:</span>
-          <span id="multiplierDisplay" class="font-bold text-blue-400">0.00x</span>
-        </div>
-      </div>
-
-      <button onclick="openPaywall()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition">
-        🔒 Lock In Slip & Access Detailed Model
-      </button>
-    </div>
-  </div>
-
-  <!-- PAYWALL MODAL -->
-  <div id="paywallModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-    <div class="glass-card max-w-lg w-full rounded-2xl p-6 relative border border-slate-700">
-      <button onclick="closePaywall()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
-      <div class="text-center space-y-3">
-        <div class="inline-block p-3 rounded-full bg-blue-600/20 text-blue-400 text-2xl mb-1">⚡</div>
-        <h3 class="text-2xl font-extrabold text-white">Unlock Full Edge Access</h3>
-        <p class="text-sm text-slate-300">Get 24h-72h early line scans, high +EV stat props, and automated market probability models for <span class="text-emerald-400 font-bold">$15/month</span>.</p>
-      </div>
-
-      <div class="my-6 space-y-3 text-sm text-slate-300">
+    <!-- Header / Navbar -->
+    <header class="card-bg sticky top-0 z-40 px-4 py-3 border-b border-gray-800 flex justify-between items-center shadow-lg">
         <div class="flex items-center space-x-2">
-          <span class="text-emerald-400">✓</span>
-          <span>Early opening line movement & early injury indicators</span>
+            <span class="text-xl font-black tracking-wider text-white">BEST BETS<span class="text-emerald-400">PRO</span></span>
+            <span class="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded border border-emerald-500/20">MVP</span>
         </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-emerald-400">✓</span>
-          <span>Unlimited Lineup Slip Probability calculations</span>
+        <div class="flex items-center space-x-3">
+            <button onclick="runLiveScan()" id="scan-btn" class="accent-gradient text-slate-950 font-extrabold px-4 py-2 rounded-lg text-xs uppercase tracking-wider flex items-center space-x-2 hover:opacity-90 transition shadow-md shadow-emerald-950">
+                <span id="scan-text">Run Live Scan</span>
+            </button>
         </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-emerald-400">✓</span>
-          <span>All Sports Categories + Macro & Prediction Markets</span>
-        </div>
-      </div>
+    </header>
 
-      <!-- PROMO CODE INPUT -->
-      <div class="space-y-2 mb-6">
-        <label class="text-xs font-semibold uppercase text-slate-400">Have a Sponsor Promo Code?</label>
-        <div class="flex space-x-2">
-          <input type="text" id="promoInput" placeholder="Enter code (e.g., VIP100)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white uppercase focus:outline-none focus:border-blue-500">
-          <button onclick="applyPromoCode()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-lg border border-slate-700 transition">Apply</button>
-        </div>
-        <p id="promoMessage" class="text-xs hidden"></p>
-      </div>
-
-      <a id="paywallCheckoutBtn" href="https://stripe.com" target="_blank" class="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-center text-white font-bold rounded-xl shadow-lg transition">
-        Subscribe for $15 / Month
-      </a>
-
-      <div class="mt-4 text-center space-y-1">
-        <p class="text-[10px] text-slate-500">Must be 21+. Gambling Problem? Call 1-800-GAMBLER. For informational and analytical research purposes only. No financial guarantees or refunds.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- CONTENT EDITOR DRAWER -->
-  <div id="editorDrawer" class="fixed inset-y-0 left-0 w-full max-w-sm bg-slate-900 border-r border-slate-800 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-6 overflow-y-auto">
-    <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-      <h2 class="text-lg font-bold text-white">⚙️ Content & Admin Settings</h2>
-      <button onclick="toggleEditorDrawer()" class="text-slate-400 hover:text-white text-xl">✕</button>
-    </div>
-    <div class="mt-6 space-y-4 text-sm">
-      <div>
-        <label class="block text-xs font-semibold text-slate-400 mb-1">App Title</label>
-        <input type="text" id="editHeaderTitle" value="BEST BETS" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-400 mb-1">Stripe Checkout Link URL</label>
-        <input type="text" id="editStripeUrl" value="https://stripe.com" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white">
-      </div>
-      <button onclick="saveAdminSettings()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded">Save Changes</button>
-    </div>
-  </div>
-
-  <footer class="border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-500">
-    <p>© 2026 Best Bets MVP Engine. All rights reserved. 21+ Responsible Gaming (1-800-GAMBLER).</p>
-  </footer>
-
-  <script>
-    // DATA MOCK STATE
-    const categories = ["ALL", "NFL", "NBA", "MLB", "NHL", "SOCCER", "UFC/BOXING", "COLLEGE", "POLITICS & MACRO"];
-    const platforms = ["ALL DESKS", "Desk Alpha", "Prop Source A", "Exchange 1", "Exchange 2", "Bookmaker B"];
-
-    let activeCategory = "ALL";
-    let activePlatform = "ALL DESKS";
-    let lineup = [];
-
-    const picksData = [
-      { id: 1, category: "NFL", desk: "Prop Source A", match: "Kansas City vs Buffalo (24h Out)", prop: "Passing Yards Over 265.5", winProb: 63.5, evEdge: "+8.4%", note: "Early line posted 1.5 yds lower than model expectation. Defense ranks #28 vs pass." },
-      { id: 2, category: "NBA", desk: "Desk Alpha", match: "LA vs Boston (48h Out)", prop: "Points Over 24.5", winProb: 61.2, evEdge: "+6.8%", note: "Early rest model indicates high usage. Opponent allows high paint volume." },
-      { id: 3, category: "POLITICS & MACRO", desk: "Exchange 1", match: "Economic Rate Decision", prop: "Rate Cut Approval Odds", winProb: 72.1, evEdge: "+11.2%", note: "Early macroeconomic sentiment indicators shifting model confidence." },
-      { id: 4, category: "MLB", desk: "Bookmaker B", match: "NY vs Houston (72h Out)", prop: "Pitcher Strikeouts Over 6.5", winProb: 58.9, evEdge: "+5.1%", note: "Opposing lineup ranks top 3 in strikeout rate over last 10 games." }
-    ];
-
-    // RENDER CATEGORIES
-    function renderCategories() {
-      const bar = document.getElementById("categoryBar");
-      bar.innerHTML = categories.map(cat => `
-        <button onclick="selectCategory('${cat}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${activeCategory === cat ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
-          ${cat}
+    <!-- Navigation Tabs -->
+    <nav class="card-bg border-b border-gray-800 px-4 flex space-x-6 text-sm font-semibold text-gray-400 overflow-x-auto scrollbar-none">
+        <button onclick="switchTab('picks')" id="tab-picks" class="py-3 tab-active whitespace-nowrap flex items-center space-x-2">
+            <i class="fa-solid fa-fire text-amber-400"></i>
+            <span>Recommended Bets</span>
         </button>
-      `).join('');
-    }
-
-    // RENDER PLATFORMS
-    function renderPlatforms() {
-      const bar = document.getElementById("platformBar");
-      bar.innerHTML = platforms.map(p => `
-        <button onclick="selectPlatform('${p}')" class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition ${activePlatform === p ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'}">
-          ${p}
+        <button onclick="switchTab('builder')" id="tab-builder" class="py-3 whitespace-nowrap flex items-center space-x-2 relative">
+            <i class="fa-solid fa-calculator text-emerald-400"></i>
+            <span>Lineup Builder</span>
+            <span id="tab-slip-count" class="bg-emerald-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full hidden">0</span>
         </button>
-      `).join('');
-    }
+        <button onclick="switchTab('props')" id="tab-props" class="py-3 whitespace-nowrap flex items-center space-x-2">
+            <i class="fa-solid fa-user-ninja text-blue-400"></i>
+            <span>PrizePicks Props</span>
+        </button>
+        <button onclick="switchTab('games')" id="tab-games" class="py-3 whitespace-nowrap flex items-center space-x-2">
+            <i class="fa-solid fa-football text-amber-600"></i>
+            <span>Weekly Games & Lines</span>
+        </button>
+        <button onclick="switchTab('kalshi')" id="tab-kalshi" class="py-3 whitespace-nowrap flex items-center space-x-2">
+            <i class="fa-solid fa-chart-line text-purple-400"></i>
+            <span>Kalshi Markets</span>
+        </button>
+    </nav>
 
-    // RENDER PICKS CARDS
-    function renderPicks() {
-      const container = document.getElementById("picksContainer");
-      const filtered = picksData.filter(p => {
-        const catMatch = activeCategory === "ALL" || p.category === activeCategory;
-        const platMatch = activePlatform === "ALL DESKS" || p.desk === activePlatform;
-        return catMatch && platMatch;
-      });
+    <main class="max-w-5xl mx-auto p-4 space-y-6">
 
-      if(filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-sm">No analysis matches the selected category/platform filters.</div>`;
-        return;
-      }
-
-      container.innerHTML = filtered.map(item => {
-        const inLineup = lineup.some(l => l.id === item.id);
-        return `
-          <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-slate-700 transition">
-            <div>
-              <div class="flex items-center justify-between text-xs mb-2">
-                <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">${item.category}</span>
-                <span class="text-slate-400 font-medium">${item.desk}</span>
-              </div>
-              <h3 class="font-bold text-white text-base">${item.match}</h3>
-              <p class="text-sm text-blue-400 font-semibold mt-1">${item.prop}</p>
-              <p class="text-xs text-slate-400 mt-2 leading-relaxed">${item.note}</p>
+        <!-- TAB 1: AI RECOMMENDED BETS -->
+        <section id="sec-picks" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <span>High-Confidence AI Pick Matrix</span>
+                    </h2>
+                    <p class="text-xs text-gray-400">Automated multi-factor model scanning injury logs, weather, & historical hit rates.</p>
+                </div>
+                <div class="flex items-center space-x-2 text-xs text-gray-400 bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Confidence Threshold: <strong class="text-white">>72%</strong></span>
+                </div>
             </div>
 
-            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-bold">AI Model Probability</span>
-                <span class="text-base font-extrabold text-emerald-400">${item.winProb}% Win Prob</span>
-              </div>
-              <button onclick="toggleLineupItem(${item.id})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${inLineup ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'}">
-                ${inLineup ? '✓ In Slip' : '+ Add to Slip'}
-              </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- AI Recommended Pick 1 -->
+                <div class="card-bg p-4 rounded-xl space-y-3 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-emerald-500 text-slate-950 font-black text-[10px] px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                        91% AI Win Grade
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400">
+                            NFL
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">Patrick Mahomes OVER 265.5 Pass Yds</h3>
+                            <p class="text-xs text-gray-400">Chiefs vs Bills • Sun 4:25 PM</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/60 p-3 rounded-lg border border-gray-800/80 text-xs space-y-1">
+                        <div class="flex justify-between"><span class="text-gray-400">L5 Hit Rate:</span><span class="font-bold text-emerald-400">80% (4/5)</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Bills Pass Defense Rank:</span><span class="font-bold text-amber-400">22nd in NFL</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Implied Probability:</span><span class="font-bold text-white">74.2%</span></div>
+                    </div>
+                    <button onclick="addCustomLeg('Patrick Mahomes', 'OVER 265.5 Pass Yds', 74.2, 1.85)" class="w-full accent-gradient text-slate-950 font-bold py-2 rounded-lg text-xs uppercase tracking-wider hover:opacity-90 transition">
+                        + Add Pick to Lineup Builder
+                    </button>
+                </div>
+
+                <!-- AI Recommended Pick 2 -->
+                <div class="card-bg p-4 rounded-xl space-y-3 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-emerald-500 text-slate-950 font-black text-[10px] px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                        88% AI Win Grade
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center font-bold text-blue-400">
+                            NBA
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">Jayson Tatum OVER 34.5 Pts + Reb</h3>
+                            <p class="text-xs text-gray-400">Celtics @ Heat • Tonight 7:30 PM</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/60 p-3 rounded-lg border border-gray-800/80 text-xs space-y-1">
+                        <div class="flex justify-between"><span class="text-gray-400">L10 Hit Rate:</span><span class="font-bold text-emerald-400">70% (7/10)</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Heat Matchup Pace:</span><span class="font-bold text-emerald-400">+4.2 Possessions</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Implied Probability:</span><span class="font-bold text-white">71.0%</span></div>
+                    </div>
+                    <button onclick="addCustomLeg('Jayson Tatum', 'OVER 34.5 Pts + Reb', 71.0, 1.82)" class="w-full accent-gradient text-slate-950 font-bold py-2 rounded-lg text-xs uppercase tracking-wider hover:opacity-90 transition">
+                        + Add Pick to Lineup Builder
+                    </button>
+                </div>
             </div>
-          </div>
-        `;
-      }).join('');
-    }
+        </section>
 
-    // LINEUP HANDLERS
-    function toggleLineupItem(id) {
-      const item = picksData.find(p => p.id === id);
-      const exists = lineup.some(l => l.id === id);
-      if(exists) {
-        lineup = lineup.filter(l => l.id !== id);
-      } else {
-        lineup.push(item);
-      }
-      updateLineupUI();
-      renderPicks();
-    }
+        <!-- TAB 2: LINEUP BUILDER & PROBABILITY CALCULATOR -->
+        <section id="sec-builder" class="space-y-6 hidden">
+            <div class="card-bg p-6 rounded-2xl border-emerald-500/30 relative">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-gray-800">
+                    <div>
+                        <h2 class="text-xl font-black text-white flex items-center space-x-2">
+                            <span>Custom Lineup Builder & Win Calculator</span>
+                        </h2>
+                        <p class="text-xs text-gray-400">Build your slip or run Monte Carlo probability simulations on your selections.</p>
+                    </div>
+                    <button onclick="clearSlip()" class="text-xs text-red-400 hover:text-red-300 font-semibold px-3 py-1.5 bg-red-500/10 rounded-lg border border-red-500/20">
+                        <i class="fa-solid fa-trash mr-1"></i> Clear All Legs
+                    </button>
+                </div>
 
-    function updateLineupUI() {
-      const bar = document.getElementById("floatingLineupBar");
-      const badge = document.getElementById("lineupCountBadge");
-      const list = document.getElementById("lineupItemsList");
-      const probDisplay = document.getElementById("combinedProbDisplay");
-      const multDisplay = document.getElementById("multiplierDisplay");
+                <!-- Active Slip Container -->
+                <div class="mt-4 space-y-3" id="slip-legs-container">
+                    <!-- Dynamic slip legs render here -->
+                </div>
 
-      badge.innerText = lineup.length;
-      if(lineup.length > 0) bar.classList.remove("hidden");
-      else bar.classList.add("hidden");
+                <!-- Add Quick Leg Form -->
+                <div class="mt-4 p-4 bg-gray-900/80 rounded-xl border border-gray-800 space-y-3">
+                    <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider">Quick Add Custom Leg</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                        <input id="custom-player" type="text" placeholder="Player/Team (e.g., Derrick Henry)" class="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-emerald-500">
+                        <input id="custom-prop" type="text" placeholder="Prop/Line (e.g., OVER 85.5 Rush Yds)" class="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-emerald-500">
+                        <input id="custom-prob" type="number" min="1" max="99" placeholder="Estimated Hit Rate % (e.g. 68)" class="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-emerald-500">
+                        <button onclick="addManualLeg()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs py-2.5 rounded-lg transition">
+                            + Add Leg
+                        </button>
+                    </div>
+                </div>
 
-      list.innerHTML = lineup.map(item => `
-        <div class="bg-slate-800 p-3 rounded-lg flex justify-between items-center text-xs">
-          <div>
-            <p class="font-bold text-white">${item.prop}</p>
-            <p class="text-slate-400">${item.match}</p>
-          </div>
-          <button onclick="toggleLineupItem(${item.id})" class="text-slate-400 hover:text-red-400 font-bold ml-2">✕</button>
-        </div>
-      `).join('');
+                <!-- Lineup Probability & Simulation Output Card -->
+                <div class="mt-6 bg-gradient-to-br from-gray-900 to-slate-950 p-5 rounded-xl border border-gray-800 space-y-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center border-b border-gray-800 pb-4">
+                        <div>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase">Total Legs</span>
+                            <div id="stat-legs-count" class="text-2xl font-black text-white">0</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase">Combined Multiplier</span>
+                            <div id="stat-multiplier" class="text-2xl font-black text-emerald-400">1.0x</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase">Calculated Win Chance</span>
+                            <div id="stat-win-chance" class="text-2xl font-black text-emerald-400">0.0%</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase">Fair Odds</span>
+                            <div id="stat-fair-odds" class="text-2xl font-black text-white">+0</div>
+                        </div>
+                    </div>
 
-      // Calculate Combined Probability
-      let prob = lineup.reduce((acc, curr) => acc * (curr.winProb / 100), 1);
-      let combined = lineup.length > 0 ? (prob * 100).toFixed(1) : "0.0";
-      let multiplier = lineup.length > 0 ? (1 / prob).toFixed(2) : "0.00";
+                    <!-- Monte Carlo Simulation Visualizer -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="font-bold text-gray-300">10,000 Monte Carlo Simulation Distribution</span>
+                            <span id="sim-status" class="text-gray-400 font-mono">Ready</span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-4 rounded-full overflow-hidden p-0.5 border border-gray-700">
+                            <div id="sim-bar-fill" class="bg-gradient-to-r from-emerald-500 to-teal-300 h-full rounded-full sim-bar w-0"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-gray-500 font-mono">
+                            <span>0% (High Risk)</span>
+                            <span>50%</span>
+                            <span>100% (High Confidence)</span>
+                        </div>
+                    </div>
 
-      probDisplay.innerText = `${combined}%`;
-      multDisplay.innerText = `${multiplier}x`;
-    }
+                    <button onclick="runMonteCarlo()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3 rounded-lg text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Simulate 10,000 Runs</span>
+                    </button>
+                </div>
+            </div>
+        </section>
 
-    // UI MODAL TOGGLES
-    function selectCategory(cat) { activeCategory = cat; renderCategories(); renderPicks(); }
-    function selectPlatform(p) { activePlatform = p; renderPlatforms(); renderPicks(); }
-    function toggleLineupDrawer() { document.getElementById("lineupDrawer").classList.toggle("translate-x-full"); }
-    function toggleEditorDrawer() { document.getElementById("editorDrawer").classList.toggle("-translate-x-full"); }
-    function openPaywall() { document.getElementById("paywallModal").classList.remove("hidden"); }
-    function closePaywall() { document.getElementById("paywallModal").classList.add("hidden"); }
+        <!-- TAB 3: PRIZEPICKS PROPS -->
+        <section id="sec-props" class="space-y-4 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-white">PrizePicks Player Props</h2>
+                <span class="text-xs text-gray-400">Live Over/Under Lines</span>
+            </div>
 
-    function applyPromoCode() {
-      const code = document.getElementById("promoInput").value.trim().toUpperCase();
-      const msg = document.getElementById("promoMessage");
-      msg.classList.remove("hidden");
-      if(code === "VIP100" || code === "SPONSOR100") {
-        msg.className = "text-xs text-emerald-400 font-bold";
-        msg.innerText = "✓ 100% Free VIP Sponsor Access Granted!";
-      } else {
-        msg.className = "text-xs text-red-400";
-        msg.innerText = "Invalid promo code. Try VIP100";
-      }
-    }
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Prop Card 1 -->
+                <div class="card-bg p-4 rounded-xl space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-emerald-400 uppercase">NFL • SUN 1:00 PM</span>
+                            <h3 class="text-base font-bold text-white">Travis Kelce</h3>
+                            <p class="text-xs text-gray-400">KC vs BUF</p>
+                        </div>
+                        <span class="bg-gray-800 text-gray-300 text-[10px] font-mono px-2 py-1 rounded">L5: 80% Hit Rate</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-y border-gray-800">
+                        <span class="text-sm font-medium text-gray-300">Receiving Yards</span>
+                        <span class="text-xl font-extrabold text-white">62.5</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="addCustomLeg('Travis Kelce', 'OVER 62.5 Rec Yds', 68.0, 1.80)" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold py-2 rounded-lg text-xs transition">
+                            OVER (More)
+                        </button>
+                        <button onclick="addCustomLeg('Travis Kelce', 'UNDER 62.5 Rec Yds', 42.0, 1.95)" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-2 rounded-lg text-xs transition">
+                            UNDER (Less)
+                        </button>
+                    </div>
+                </div>
 
-    function triggerDeepScan() {
-      alert("AI Deep Scan Complete! Early line movements and injury updates recalculated for all 24h-72h upcoming events.");
-    }
+                <!-- Prop Card 2 -->
+                <div class="card-bg p-4 rounded-xl space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-blue-400 uppercase">NBA • TONIGHT 8:00 PM</span>
+                            <h3 class="text-base font-bold text-white">Luka Dončić</h3>
+                            <p class="text-xs text-gray-400">DAL @ LAL</p>
+                        </div>
+                        <span class="bg-gray-800 text-gray-300 text-[10px] font-mono px-2 py-1 rounded">L10: 90% Hit Rate</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-y border-gray-800">
+                        <span class="text-sm font-medium text-gray-300">Assists</span>
+                        <span class="text-xl font-extrabold text-white">8.5</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="addCustomLeg('Luka Dončić', 'OVER 8.5 Assists', 76.5, 1.83)" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold py-2 rounded-lg text-xs transition">
+                            OVER (More)
+                        </button>
+                        <button onclick="addCustomLeg('Luka Dončić', 'UNDER 8.5 Assists', 35.0, 2.05)" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-2 rounded-lg text-xs transition">
+                            UNDER (Less)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    // INITIALIZE
-    renderCategories();
-    renderPlatforms();
-    renderPicks();
-  </script>
+        <!-- TAB 4: WEEKLY GAMES & ODDS -->
+        <section id="sec-games" class="space-y-4 hidden">
+            <h2 class="text-lg font-bold text-white">Games of the Week & Consensus Odds</h2>
+            <div class="space-y-3">
+                <div class="card-bg p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="w-full md:w-auto">
+                        <span class="text-[10px] text-gray-400 font-bold">SUNDAY • 4:25 PM EST</span>
+                        <div class="text-base font-bold text-white">Dallas Cowboys @ San Francisco 49ers</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 w-full md:w-auto text-center">
+                        <button onclick="addCustomLeg('SF 49ers', 'Spread -3.5', 56.0, 1.91)" class="bg-gray-800 hover:bg-gray-700 p-2 rounded transition">
+                            <div class="text-[10px] text-gray-400">SPREAD</div>
+                            <div class="text-xs font-bold text-emerald-400">SF -3.5</div>
+                        </button>
+                        <button onclick="addCustomLeg('SF 49ers', 'Moneyline Win', 62.0, 1.58)" class="bg-gray-800 hover:bg-gray-700 p-2 rounded transition">
+                            <div class="text-[10px] text-gray-400">MONEYLINE</div>
+                            <div class="text-xs font-bold text-white">SF (-170)</div>
+                        </button>
+                        <button onclick="addCustomLeg('DAL vs SF', 'OVER 47.5 Points', 53.0, 1.91)" class="bg-gray-800 hover:bg-gray-700 p-2 rounded transition">
+                            <div class="text-[10px] text-gray-400">TOTAL</div>
+                            <div class="text-xs font-bold text-emerald-400">O 47.5</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: KALSHI PREDICTION MARKETS -->
+        <section id="sec-kalshi" class="space-y-4 hidden">
+            <h2 class="text-lg font-bold text-white">Kalshi Prediction Markets</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="card-bg p-4 rounded-xl space-y-3">
+                    <span class="text-[10px] font-bold text-indigo-400 uppercase">PREDICTION MARKET</span>
+                    <h3 class="text-base font-bold text-white">Will Kansas City Chiefs win Super Bowl LIX?</h3>
+                    <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-emerald-500 h-full" style="width: 28%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>Implied Chance: 28%</span>
+                        <span>Volume: $1.4M</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="addCustomLeg('Chiefs SB Win', 'YES Market', 28.0, 3.55)" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold py-2 rounded-lg text-xs transition">
+                            YES 28¢
+                        </button>
+                        <button onclick="addCustomLeg('Chiefs SB Win', 'NO Market', 72.0, 1.38)" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold py-2 rounded-lg text-xs transition">
+                            NO 72¢
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Global Slip State
+        let lineupSlip = [
+            { id: 1, player: 'Patrick Mahomes', prop: 'OVER 265.5 Pass Yds', hitRate: 74.2, multiplier: 1.85 },
+            { id: 2, player: 'Jayson Tatum', prop: 'OVER 34.5 Pts + Reb', hitRate: 71.0, multiplier: 1.82 }
+        ];
+
+        // Initialize state on page load
+        window.onload = function() {
+            renderSlip();
+        };
+
+        // Navigation Tab Switcher
+        function switchTab(tabKey) {
+            const tabs = ['picks', 'builder', 'props', 'games', 'kalshi'];
+            tabs.forEach(t => {
+                const sec = document.getElementById('sec-' + t);
+                const btn = document.getElementById('tab-' + t);
+                if (sec) sec.classList.add('hidden');
+                if (btn) btn.classList.remove('tab-active');
+            });
+
+            const activeSec = document.getElementById('sec-' + tabKey);
+            const activeBtn = document.getElementById('tab-' + tabKey);
+            if (activeSec) activeSec.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add('tab-active');
+        }
+
+        // Live Scan Trigger
+        function runLiveScan() {
+            const scanBtn = document.getElementById('scan-btn');
+            const scanText = document.getElementById('scan-text');
+            scanText.innerText = 'Scanning...';
+            scanBtn.classList.add('opacity-75');
+
+            setTimeout(() => {
+                scanText.innerText = 'Scan Complete!';
+                setTimeout(() => {
+                    scanText.innerText = 'Run Live Scan';
+                    scanBtn.classList.remove('opacity-75');
+                }, 1500);
+            }, 1200);
+        }
+
+        // Add Custom Leg to Lineup
+        function addCustomLeg(player, prop, hitRate, multiplier = 1.85) {
+            const newLeg = {
+                id: Date.now(),
+                player: player,
+                prop: prop,
+                hitRate: parseFloat(hitRate),
+                multiplier: parseFloat(multiplier)
+            };
+            lineupSlip.push(newLeg);
+            renderSlip();
+            
+            // Switch to builder tab to show addition
+            switchTab('builder');
+        }
+
+        // Add Manual Leg from Input Form
+        function addManualLeg() {
+            const playerInput = document.getElementById('custom-player');
+            const propInput = document.getElementById('custom-prop');
+            const probInput = document.getElementById('custom-prob');
+
+            if (!playerInput.value || !propInput.value || !probInput.value) {
+                alert('Please fill out Player, Prop Line, and estimated Hit Rate %.');
+                return;
+            }
+
+            addCustomLeg(playerInput.value, propInput.value, probInput.value, 1.85);
+
+            playerInput.value = '';
+            propInput.value = '';
+            probInput.value = '';
+        }
+
+        // Remove Leg from Slip
+        function removeLeg(id) {
+            lineupSlip = lineupSlip.filter(leg => leg.id !== id);
+            renderSlip();
+        }
+
+        // Clear All Slip Legs
+        function clearSlip() {
+            lineupSlip = [];
+            renderSlip();
+        }
+
+        // Render Active Lineup Slip and Recalculate Probability
+        function renderSlip() {
+            const container = document.getElementById('slip-legs-container');
+            const slipBadge = document.getElementById('tab-slip-count');
+            
+            if (slipBadge) {
+                if (lineupSlip.length > 0) {
+                    slipBadge.innerText = lineupSlip.length;
+                    slipBadge.classList.remove('hidden');
+                } else {
+                    slipBadge.classList.add('hidden');
+                }
+            }
+
+            if (lineupSlip.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500 text-xs">
+                        No legs added to lineup yet. Click "+ Add Pick" on any market to build your slip.
+                    </div>
+                `;
+                updateCalculatorStats(0, 0, 0);
+                return;
+            }
+
+            let html = '';
+            lineupSlip.forEach(leg => {
+                html += `
+                    <div class="card-bg p-3 rounded-lg flex justify-between items-center border-l-4 border-l-emerald-500">
+                        <div>
+                            <div class="font-bold text-white text-sm">${leg.player}</div>
+                            <div class="text-xs text-gray-400">${leg.prop} • <span class="text-emerald-400 font-mono">${leg.hitRate}% Est. Win Rate</span></div>
+                        </div>
+                        <button onclick="removeLeg(${leg.id})" class="text-gray-500 hover:text-red-400 p-2">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            // Compute Probability Stats
+            calculateLineupProbabilities();
+        }
+
+        // Probability & Odds Engine
+        function calculateLineupProbabilities() {
+            if (lineupSlip.length === 0) {
+                updateCalculatorStats(0, 0, 0);
+                return;
+            }
+
+            // Calculate overall combined probability using individual leg probabilities
+            let combinedProbDecimal = 1.0;
+            let totalMultiplier = 1.0;
+
+            lineupSlip.forEach(leg => {
+                combinedProbDecimal *= (leg.hitRate / 100);
+                totalMultiplier *= leg.multiplier;
+            });
+
+            // Apply slight correlation penalty for multi-leg slips (slight realistic decay)
+            if (lineupSlip.length > 2) {
+                combinedProbDecimal *= 0.95; 
+            }
+
+            const winPercent = (combinedProbDecimal * 100).toFixed(1);
+            const formattedMultiplier = totalMultiplier.toFixed(2);
+
+            updateCalculatorStats(lineupSlip.length, formattedMultiplier, winPercent);
+        }
+
+        function updateCalculatorStats(legsCount, multiplier, winChance) {
+            document.getElementById('stat-legs-count').innerText = legsCount;
+            document.getElementById('stat-multiplier').innerText = multiplier + 'x';
+            document.getElementById('stat-win-chance').innerText = winChance + '%';
+
+            // Calculate Fair American Odds from win probability
+            let fairOddsText = '+0';
+            if (winChance > 0) {
+                const probDec = winChance / 100;
+                if (probDec >= 0.5) {
+                    const odds = Math.round((probDec / (1 - probDec)) * -100);
+                    fairOddsText = odds.toString();
+                } else {
+                    const odds = Math.round(((1 - probDec) / probDec) * 100);
+                    fairOddsText = '+' + odds.toString();
+                }
+            }
+            document.getElementById('stat-fair-odds').innerText = fairOddsText;
+        }
+
+        // Run Monte Carlo Simulation
+        function runMonteCarlo() {
+            if (lineupSlip.length === 0) {
+                alert('Please add at least 1 leg to run the simulation!');
+                return;
+            }
+
+            const status = document.getElementById('sim-status');
+            const fillBar = document.getElementById('sim-bar-fill');
+            status.innerText = 'Simulating 10,000 iterations...';
+            fillBar.style.width = '10%';
+
+            setTimeout(() => {
+                let wins = 0;
+                const totalSims = 10000;
+
+                for (let i = 0; i < totalSims; i++) {
+                    let slipHit = true;
+                    for (let j = 0; j < lineupSlip.length; j++) {
+                        const randomVal = Math.random() * 100;
+                        if (randomVal > lineupSlip[j].hitRate) {
+                            slipHit = false;
+                            break;
+                        }
+                    }
+                    if (slipHit) wins++;
+                }
+
+                const simWinRate = ((wins / totalSims) * 100).toFixed(1);
+                fillBar.style.width = `${simWinRate}%`;
+                status.innerText = `Sim Complete: ${wins.toLocaleString()} / 10,000 Won (${simWinRate}%)`;
+            }, 600);
+        }
+    </script>
 </body>
 </html>
