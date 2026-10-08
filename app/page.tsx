@@ -1,647 +1,305 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Zap,
-  Sliders,
-  TrendingUp,
-  Plus,
-  Trash2,
-  Key,
-  ShieldCheck,
-  Play,
-  BarChart2,
-  Gift,
-  CreditCard,
-  Crown,
-  Sparkles,
   Activity,
+  ArrowUpRight,
+  BarChart3,
+  CheckCircle2,
+  Clock3,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
+import { buildBestValueBoard, getRefreshSchedule } from "@/app/lib/marketData";
 
-// ==========================================
-// 1. BACKEND MARKET STORE & TYPES
-// ==========================================
-export type SportKey = "all" | "nfl" | "mlb" | "nba" | "ufc" | "soccer" | "props";
-export type RiskLevel = "Low Risk" | "Medium Risk" | "High Risk";
-
-export type PickCard = {
+type BuilderSelection = {
   id: string;
-  sport: "NFL" | "MLB" | "NBA" | "UFC / Combat" | "Soccer" | "Props";
-  sportKey: Exclude<SportKey, "all">;
-  title: string;
-  matchup: string;
-  edge: string;
-  winChance: number;
-  ev: number;
-  unitStake: number;
-  confidence: number;
-  risk: RiskLevel;
-  status: string;
-  valueLabel: string;
-  market: string;
-  premium: boolean;
+  label: string;
+  odds: string;
+  tag: string;
 };
 
-export type SlipDraft = {
-  id: string;
-  title: string;
-  confidence: number;
-  payout: number;
-  risk: RiskLevel;
-  legs: string[];
-};
+const formatPercent = (v: number) => `${v.toFixed(1)}%`;
 
-export type PromoCode = {
-  code: string;
-  freeForLife: boolean;
-  description: string;
-  active: boolean;
-};
+export default function BestBetsBoardPage() {
+  const [selectedSport, setSelectedSport] = useState("All");
+  const [builder, setBuilder] = useState<BuilderSelection[]>([]);
+  const [nowLabel, setNowLabel] = useState("06:00 AM ET");
 
-export type SubscriptionPlan = {
-  monthlyPrice: number;
-  currency: string;
-  name: string;
-};
+  const refreshInfo = useMemo(() => getRefreshSchedule(), []);
+  const marketBoard = useMemo(() => buildBestValueBoard(), []);
 
-const STANDARD_SUBSCRIPTION: SubscriptionPlan = {
-  monthlyPrice: 15,
-  currency: "USD",
-  name: "Standard VIP Pass",
-};
-
-const VIP_PROMO_ONLY4U: PromoCode = {
-  code: "ONLY4U",
-  freeForLife: true,
-  description: "Exclusive lifetime access pass",
-  active: true,
-};
-
-// ==========================================
-// 2. INTERFACES FOR UI & ODDS
-// ==========================================
-interface MarketOdds {
-  spread: string;
-  moneyline: string;
-  total: string;
-}
-
-interface GameItem {
-  id: string;
-  sport: string;
-  homeTeam: string;
-  awayTeam: string;
-  commenceTime: string;
-  odds: {
-    home: MarketOdds;
-    away: MarketOdds;
-  };
-}
-
-interface PropItem {
-  id: string;
-  player: string;
-  team: string;
-  stat: string;
-  line: number;
-  overOdds: number;
-  underOdds: number;
-  impliedProb: number;
-}
-
-interface BetSelection {
-  id: string;
-  title: string;
-  pick: string;
-  odds: number;
-  type: "game" | "prop";
-}
-
-// ==========================================
-// 3. MAIN COMPONENT
-// ==========================================
-export default function BestBetsMVP() {
-  const [apiKey, setApiKey] = useState<string>("");
-  const [isKeySaved, setIsKeySaved] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<"games" | "props">("games");
-  const [isLiveAutoTicker, setIsLiveAutoTicker] = useState<boolean>(true);
-
-  // Promo & Payment State ($15/mo & ONLY4U)
-  const [promoInput, setPromoInput] = useState<string>("");
-  const [isVipUser, setIsVipUser] = useState<boolean>(false);
-  const [showPayModal, setShowPayModal] = useState<boolean>(false);
-  const [promoMessage, setPromoMessage] = useState<{ text: string; success: boolean } | null>(null);
-
-  // Data & Slip State
-  const [games, setGames] = useState<GameItem[]>([]);
-  const [propsList, setPropsList] = useState<PropItem[]>([]);
-  const [betSlip, setBetSlip] = useState<BetSelection[]>([]);
-  const [wager, setWager] = useState<number>(20);
-
-  // Simulation State
-  const [simResults, setSimResults] = useState<{ winRate: number; ev: number } | null>(null);
-
-  // Initial Load
   useEffect(() => {
-    const savedKey = localStorage.getItem("odds_api_key");
-    if (savedKey) {
-      setApiKey(savedKey);
-      setIsKeySaved(true);
-    }
+    const timer = setInterval(() => {
+      const date = new Date();
+      const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setNowLabel(`${time} ET`);
+    }, 1000 * 30);
 
-    const savedVip = localStorage.getItem("bestbets_vip_status");
-    if (savedVip === "true") {
-      setIsVipUser(true);
-    }
-
-    loadInitialZeroCostData();
+    return () => clearInterval(timer);
   }, []);
 
-  // ZERO-COST REAL-TIME TICKER (0 API Credits Used)
-  useEffect(() => {
-    if (!isLiveAutoTicker) return;
+  const filteredBoard =
+    selectedSport === "All"
+      ? marketBoard
+      : marketBoard.filter((item) => item.sport === selectedSport);
 
-    const interval = setInterval(() => {
-      setGames((prevGames) =>
-        prevGames.map((game) => {
-          const shift = Math.random() > 0.5 ? 5 : -5;
-          const currentMl = parseInt(game.odds.home.moneyline, 10) || -110;
-          const newMl = currentMl + shift;
-
-          return {
-            ...game,
-            odds: {
-              ...game.odds,
-              home: {
-                ...game.odds.home,
-                moneyline: newMl > 0 ? `+${newMl}` : `${newMl}`,
-              },
-            },
-          };
-        })
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isLiveAutoTicker]);
-
-  // Load Initial Zero-Cost Baseline
-  const loadInitialZeroCostData = () => {
-    const mockGames: GameItem[] = [
+  const addToBuilder = (entry: (typeof marketBoard)[number]) => {
+    const duplicate = builder.some((item) => item.id === entry.id);
+    if (duplicate) return;
+    setBuilder((prev) => [
+      ...prev,
       {
-        id: "g1",
-        sport: "NFL",
-        homeTeam: "Seattle Seahawks",
-        awayTeam: "Denver Broncos",
-        commenceTime: "Tonight, 8:15 PM",
-        odds: {
-          home: { spread: "-1.5 (-110)", moneyline: "-120", total: "O 42.5 (-110)" },
-          away: { spread: "+1.5 (-110)", moneyline: "+100", total: "U 42.5 (-110)" },
-        },
+        id: entry.id,
+        label: `${entry.matchup} • ${entry.market.toUpperCase()}`,
+        odds: `${entry.line} (${entry.price})`,
+        tag: `${entry.book}`,
       },
-      {
-        id: "g2",
-        sport: "NFL",
-        homeTeam: "Green Bay Packers",
-        awayTeam: "Dallas Cowboys",
-        commenceTime: "Sunday, 4:25 PM",
-        odds: {
-          home: { spread: "+2.5 (-105)", moneyline: "+115", total: "O 50.5 (-110)" },
-          away: { spread: "-2.5 (-115)", moneyline: "-135", total: "U 50.5 (-110)" },
-        },
-      },
-    ];
-
-    const mockProps: PropItem[] = [
-      { id: "p1", player: "Geno Smith", team: "SEA", stat: "Passing Yards", line: 242.5, overOdds: -115, underOdds: -115, impliedProb: 53.5 },
-      { id: "p2", player: "Bo Nix", team: "DEN", stat: "Passing TDs", line: 1.5, overOdds: 110, underOdds: -140, impliedProb: 47.6 },
-      { id: "p3", player: "Dak Prescott", team: "DAL", stat: "Passing Yards", line: 265.5, overOdds: -110, underOdds: -110, impliedProb: 52.4 },
-    ];
-
-    setGames(mockGames);
-    setPropsList(mockProps);
+    ]);
   };
 
-  // Save / Clear Key Handlers
-  const handleSaveKey = () => {
-    if (!apiKey.trim()) return;
-    localStorage.setItem("odds_api_key", apiKey.trim());
-    setIsKeySaved(true);
-  };
-
-  const handleClearKey = () => {
-    localStorage.removeItem("odds_api_key");
-    setApiKey("");
-    setIsKeySaved(false);
-  };
-
-  // Promo Code Handler (ONLY4U -> Free for life VIP Pass)
-  const handleRedeemPromo = () => {
-    const formattedCode = promoInput.trim().toUpperCase();
-    if (formattedCode === VIP_PROMO_ONLY4U.code) {
-      setIsVipUser(true);
-      localStorage.setItem("bestbets_vip_status", "true");
-      setPromoMessage({ text: "PROMO APPLIED! Free-for-Life VIP Access Granted 🎉", success: true });
-      setTimeout(() => setShowPayModal(false), 1500);
-    } else {
-      setPromoMessage({ text: "Invalid promo code. Please try again.", success: false });
-    }
-  };
-
-  // Bet Slip Handlers
-  const toggleBetSelection = (item: BetSelection) => {
-    const exists = betSlip.find((b) => b.id === item.id);
-    if (exists) {
-      setBetSlip(betSlip.filter((b) => b.id !== item.id));
-    } else {
-      setBetSlip([...betSlip, item]);
-    }
-  };
-
-  // Monte Carlo Calculation Engine
-  const runMonteCarloSim = () => {
-    if (betSlip.length === 0) return;
-
-    let combinedProb = 1;
-    betSlip.forEach((bet) => {
-      const prob = bet.odds > 0 ? 100 / (bet.odds + 100) : Math.abs(bet.odds) / (Math.abs(bet.odds) + 100);
-      combinedProb *= prob;
-    });
-
-    let wins = 0;
-    const iterations = 10000;
-    for (let i = 0; i < iterations; i++) {
-      if (Math.random() <= combinedProb) {
-        wins++;
-      }
-    }
-
-    const winRate = (wins / iterations) * 100;
-    const estimatedPayout = wager * Math.pow(1.9, betSlip.length);
-    const ev = (winRate / 100) * estimatedPayout - wager;
-
-    setSimResults({ winRate, ev });
+  const removeFromBuilder = (id: string) => {
+    setBuilder((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      {/* Header Bar */}
-      <header className="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-40 backdrop-blur-md px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-        <div className="flex items-center gap-3">
-          <div className="bg-emerald-500 text-slate-950 px-3 py-1.5 rounded-xl font-black text-lg flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
-            <Zap className="w-5 h-5 fill-current" />
-            <span>BEST BETS MVP</span>
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 font-black text-slate-950 shadow-lg shadow-emerald-500/20">
+              <Zap className="h-5 w-5 fill-current" />
+              <span className="tracking-tight">BEST BETS MVP</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+              <Activity className="h-3.5 w-3.5 animate-pulse" />
+              Daily refresh: {nowLabel}
+            </div>
           </div>
 
-          <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-mono flex items-center gap-1">
-            <Activity className="w-3.5 h-3.5 animate-pulse" /> 1-CREDIT GUARDRAIL ACTIVE
-          </span>
-
-          {isVipUser ? (
-            <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold flex items-center gap-1">
-              <Crown className="w-3.5 h-3.5 fill-current" /> VIP UNLOCKED (FREE FOR LIFE)
-            </span>
-          ) : (
-            <button
-              onClick={() => setShowPayModal(true)}
-              className="text-xs bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 hover:opacity-90 transition shadow-lg shadow-emerald-500/20"
-            >
-              <Sparkles className="w-3.5 h-3.5 fill-current" /> $15/MO OR PROMO
-            </button>
-          )}
-        </div>
-
-        {/* API Key Box */}
-        <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-lg border border-slate-800 text-xs">
-          <Key className="w-4 h-4 text-slate-400" />
-          <input
-            type="password"
-            placeholder="Paste Odds API Key..."
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="bg-transparent border-none outline-none text-slate-200 w-32 sm:w-44 placeholder-slate-500 font-mono"
-          />
-          {!isKeySaved ? (
-            <button
-              onClick={handleSaveKey}
-              className="bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-200 transition font-bold"
-            >
-              Save
-            </button>
-          ) : (
-            <div className="flex items-center gap-1 text-emerald-400 font-medium px-1">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Saved</span>
-              <button onClick={handleClearKey} className="text-slate-500 hover:text-red-400 ml-1 font-bold">
-                ×
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-300">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <span>Authorized data only • no scraping</span>
+          </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (Odds & Props) */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex gap-2 border-b border-slate-800 pb-2">
-            <button
-              onClick={() => setActiveTab("games")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${
-                activeTab === "games"
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                  : "bg-slate-900 text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" /> Game Lines
-            </button>
-            <button
-              onClick={() => setActiveTab("props")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${
-                activeTab === "props"
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                  : "bg-slate-900 text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Sliders className="w-4 h-4" /> Player Props
-            </button>
-          </div>
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <section className="mb-6 grid gap-4 md:grid-cols-4">
+          <StatCard label="Live sources" value="3 approved feeds" tone="emerald" icon={<Sparkles className="h-4 w-4" />} />
+          <StatCard label="Refresh window" value={refreshInfo.cron} tone="blue" icon={<Clock3 className="h-4 w-4" />} />
+          <StatCard label="Best edge" value={formatPercent(Math.max(...marketBoard.map((m) => m.edge)))} tone="amber" icon={<TrendingUp className="h-4 w-4" />} />
+          <StatCard label="Confidence floor" value="70%+" tone="violet" icon={<Target className="h-4 w-4" />} />
+        </section>
 
-          {activeTab === "games" && (
-            <div className="space-y-3">
-              {games.map((game) => (
-                <div key={game.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-xs font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-800/50 px-2 py-0.5 rounded">
-                      {game.sport} • {game.commenceTime}
-                    </span>
-                    <span className="text-xs text-emerald-400/80 font-mono">Live Ticker (0 Credits)</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-lg border border-slate-800/60">
-                      <span className="font-semibold text-sm">{game.homeTeam}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() =>
-                            toggleBetSelection({
-                              id: `${game.id}-h-spread`,
-                              title: `${game.homeTeam} Spread`,
-                              pick: game.odds.home.spread,
-                              odds: -110,
-                              type: "game",
-                            })
-                          }
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs px-3 py-1.5 rounded text-slate-300 font-mono"
-                        >
-                          {game.odds.home.spread}
-                        </button>
-                        <button
-                          onClick={() =>
-                            toggleBetSelection({
-                              id: `${game.id}-h-ml`,
-                              title: `${game.homeTeam} ML`,
-                              pick: game.odds.home.moneyline,
-                              odds: -120,
-                              type: "game",
-                            })
-                          }
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs px-3 py-1.5 rounded text-emerald-400 font-mono font-bold"
-                        >
-                          {game.odds.home.moneyline}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-lg border border-slate-800/60">
-                      <span className="font-semibold text-sm">{game.awayTeam}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() =>
-                            toggleBetSelection({
-                              id: `${game.id}-a-spread`,
-                              title: `${game.awayTeam} Spread`,
-                              pick: game.odds.away.spread,
-                              odds: -110,
-                              type: "game",
-                            })
-                          }
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs px-3 py-1.5 rounded text-slate-300 font-mono"
-                        >
-                          {game.odds.away.spread}
-                        </button>
-                        <button
-                          onClick={() =>
-                            toggleBetSelection({
-                              id: `${game.id}-a-ml`,
-                              title: `${game.awayTeam} ML`,
-                              pick: game.odds.away.moneyline,
-                              odds: 100,
-                              type: "game",
-                            })
-                          }
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs px-3 py-1.5 rounded text-slate-300 font-mono"
-                        >
-                          {game.odds.away.moneyline}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === "props" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {propsList.map((prop) => (
-                <div key={prop.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-slate-100">{prop.player}</h4>
-                      <p className="text-xs text-slate-400">{prop.team} • {prop.stat}</p>
-                    </div>
-                    <span className="text-xs font-mono font-semibold bg-slate-800 text-emerald-400 px-2 py-1 rounded">
-                      Prob: {prop.impliedProb}%
-                    </span>
-                  </div>
-
-                  <div className="text-center py-2 bg-slate-950 rounded-lg border border-slate-800/80">
-                    <span className="text-2xl font-black text-slate-100">{prop.line}</span>
-                    <span className="text-xs text-slate-500 block uppercase tracking-wider">{prop.stat}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() =>
-                        toggleBetSelection({
-                          id: `${prop.id}-over`,
-                          title: `${prop.player} OVER`,
-                          pick: `${prop.line} ${prop.stat}`,
-                          odds: prop.overOdds,
-                          type: "prop",
-                        })
-                      }
-                      className="bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-800/60 text-emerald-400 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> OVER
-                    </button>
-                    <button
-                      onClick={() =>
-                        toggleBetSelection({
-                          id: `${prop.id}-under`,
-                          title: `${prop.player} UNDER`,
-                          pick: `${prop.line} ${prop.stat}`,
-                          odds: prop.underOdds,
-                          type: "prop",
-                        })
-                      }
-                      className="bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition"
-                    >
-                      UNDER
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Right Column (Lineup Builder & Monte Carlo) */}
-        <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sticky top-20 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-slate-100 flex items-center gap-2 text-sm">
-                <BarChart2 className="w-4 h-4 text-emerald-400" /> Lineup Builder ({betSlip.length})
-              </h3>
-              {betSlip.length > 0 && (
-                <button onClick={() => setBetSlip([])} className="text-slate-500 hover:text-red-400 text-xs flex items-center gap-1">
-                  <Trash2 className="w-3.5 h-3.5" /> Clear
-                </button>
-              )}
-            </div>
-
-            {betSlip.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 text-xs">
-                Select game lines or player props from the left panel to start building your entry.
+        <section className="mb-6 grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Best value board</p>
+                <h1 className="mt-1 text-2xl font-black text-white">Prediction chart</h1>
               </div>
-            ) : (
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {betSlip.map((item) => (
-                  <div key={item.id} className="bg-slate-950 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center text-xs">
-                    <div>
-                      <div className="font-bold text-slate-200">{item.title}</div>
-                      <div className="text-slate-400 font-mono">{item.pick}</div>
-                    </div>
-                    <button onClick={() => toggleBetSelection(item)} className="text-slate-500 hover:text-slate-300 font-bold">
-                      ×
-                    </button>
-                  </div>
+
+              <div className="flex flex-wrap gap-2">
+                {['All', 'NFL', 'NBA', 'Soccer', 'MLB'].map((sport) => (
+                  <button
+                    key={sport}
+                    onClick={() => setSelectedSport(sport)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                      selectedSport === sport
+                        ? "border-emerald-500 bg-emerald-500/15 text-emerald-300"
+                        : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600"
+                    }`}
+                  >
+                    {sport}
+                  </button>
                 ))}
               </div>
-            )}
-
-            <div className="space-y-2 pt-2 border-t border-slate-800">
-              <label className="text-xs text-slate-400 font-medium block">Entry Wager ($)</label>
-              <input
-                type="number"
-                value={wager}
-                onChange={(e) => setWager(Number(e.target.value))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-sm font-mono font-bold text-slate-100 outline-none focus:border-emerald-500"
-              />
             </div>
 
-            <button
-              onClick={runMonteCarloSim}
-              disabled={betSlip.length === 0}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition disabled:opacity-50"
-            >
-              <Play className="w-4 h-4 fill-current" /> Run Monte Carlo Sim
-            </button>
+            <div className="space-y-3">
+              {filteredBoard.map((item) => (
+                <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-950/80 p-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+                          {item.sport}
+                        </span>
+                        <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                          {item.market}
+                        </span>
+                      </div>
 
-            {simResults && (
-              <div className="bg-slate-950 border border-emerald-900/50 p-3 rounded-lg space-y-2">
-                <div className="text-xs text-emerald-400 font-bold uppercase tracking-wider">10,000 Iteration Analysis</div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-400">Simulated Win Rate:</span>
-                  <span className="font-mono font-bold text-slate-100">{simResults.winRate.toFixed(1)}%</span>
+                      <div>
+                        <h2 className="text-lg font-black text-white">{item.matchup}</h2>
+                        {item.player && (
+                          <p className="text-sm text-slate-400">
+                            {item.player} • {item.stat}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <Pill label="book" value={item.book} />
+                      <Pill label="line" value={item.line} />
+                      <Pill label="prob" value={formatPercent(item.probability)} />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-4">
+                    <MetricBox label="Edge" value={`${item.edge}%`} tone="emerald" />
+                    <MetricBox label="EV / $100" value={`$${item.ev}`} tone="amber" />
+                    <MetricBox label="Confidence" value={`${item.confidence}%`} tone="blue" />
+                    <MetricBox label="Risk" value={item.risk} tone="violet" />
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      onClick={() => addToBuilder(item)}
+                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-950 transition hover:bg-emerald-400"
+                    >
+                      <ArrowUpRight className="h-3.5 w-3.5" /> Add to builder
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-400">Expected Value (EV):</span>
-                  <span className={`font-mono font-bold ${simResults.ev >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                    ${simResults.ev.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-
-      {/* PROMO & PAYMENTS MODAL */}
-      {showPayModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 space-y-5 relative shadow-2xl">
-            <button
-              onClick={() => setShowPayModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-lg font-bold"
-            >
-              ×
-            </button>
-
-            <div className="text-center space-y-1">
-              <div className="inline-flex p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 mb-1">
-                <Crown className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-black text-slate-100">Unlock BEST BETS MVP PRO</h3>
-              <p className="text-xs text-slate-400">Get unlimited player props and Monte Carlo simulations.</p>
-            </div>
-
-            {/* Promo Code Input */}
-            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-              <label className="text-xs text-slate-300 font-bold flex items-center gap-1.5">
-                <Gift className="w-4 h-4 text-emerald-400" /> Have a Promo Code?
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter code (ONLY4U)"
-                  value={promoInput}
-                  onChange={(e) => setPromoInput(e.target.value)}
-                  className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-100 outline-none focus:border-emerald-500 uppercase flex-1"
-                />
-                <button
-                  onClick={handleRedeemPromo}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-lg transition"
-                >
-                  Apply
-                </button>
-              </div>
-
-              {promoMessage && (
-                <div className={`text-xs font-semibold ${promoMessage.success ? "text-emerald-400" : "text-red-400"}`}>
-                  {promoMessage.text}
-                </div>
-              )}
-            </div>
-
-            {/* Payment Integration Placeholder ($15/mo) */}
-            <div className="space-y-3 border-t border-slate-800 pt-4">
-              <div className="flex justify-between items-center text-xs text-slate-400">
-                <span>Standard Subscription</span>
-                <span className="font-mono font-bold text-slate-200">$15.00 / month</span>
-              </div>
-              <button
-                onClick={() => alert("Stripe checkout gateway initialized for $15/month!")}
-                className="w-full bg-slate-100 hover:bg-white text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition"
-              >
-                <CreditCard className="w-4 h-4" /> Subscribe for $15/mo via Stripe / Apple Pay
-              </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400">Slip builder</p>
+                  <h3 className="text-lg font-black text-white">Daily picks</h3>
+                </div>
+                <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-xs font-bold text-slate-300">
+                  {builder.length} selected
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {builder.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/50 p-4 text-center text-sm text-slate-400">
+                    Add the strongest available picks from the board.
+                  </div>
+                ) : (
+                  builder.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 p-2.5">
+                      <div>
+                        <p className="text-sm font-bold text-white">{item.label}</p>
+                        <p className="text-[11px] text-slate-400">{item.tag}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-lg bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-300">{item.odds}</span>
+                        <button
+                          onClick={() => removeFromBuilder(item.id)}
+                          className="text-xs text-slate-500 hover:text-red-400"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-emerald-400" />
+                <h3 className="text-lg font-black text-white">Source model</h3>
+              </div>
+
+              <div className="space-y-3 text-sm text-slate-300">
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    <span className="font-bold text-white">Approved API path</span>
+                  </div>
+                  <p className="text-xs text-slate-400">Your secure legal feed, public market data, and licensed odds provider.</p>
+                </div>
+
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-blue-400" />
+                    <span className="font-bold text-white">Daily refresh</span>
+                  </div>
+                  <p className="text-xs text-slate-400">{refreshInfo.description}</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone: "emerald" | "blue" | "amber" | "violet";
+  icon: React.ReactNode;
+}) {
+  const tones = {
+    emerald: "border-emerald-500/30 bg-emerald-500/5 text-emerald-300",
+    blue: "border-blue-500/30 bg-blue-500/5 text-blue-300",
+    amber: "border-amber-500/30 bg-amber-500/5 text-amber-300",
+    violet: "border-violet-500/30 bg-violet-500/5 text-violet-300",
+  };
+
+  return (
+    <div className={`rounded-2xl border p-4 ${tones[tone]}`}>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-[0.2em]">{label}</span>
+        {icon}
+      </div>
+      <div className="text-xl font-black text-white">{value}</div>
+    </div>
+  );
+}
+
+function MetricBox({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "emerald" | "amber" | "blue" | "violet";
+}) {
+  const tones = {
+    emerald: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    amber: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    blue: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+    violet: "bg-violet-500/10 text-violet-300 border-violet-500/30",
+  };
+
+  return (
+    <div className={`rounded-xl border p-2.5 ${tones[tone]}`}>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="mt-1 text-lg font-black text-white">{value}</p>
+    </div>
+  );
+}
+
+function Pill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+      <span className="text-slate-500">{label}: </span>
+      <span className="font-bold text-white">{value}</span>
     </div>
   );
 }
